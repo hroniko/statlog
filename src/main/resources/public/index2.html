@@ -1,0 +1,318 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>TBAPI Stat logs</title>
+    <!--<script src="http://www.chartjs.org/samples/latest/scales/linear/../../../../dist/2.7.2/Chart.bundle.js"></script>-->
+    <!--<script src="http://www.chartjs.org/samples/latest/scales/linear/../../utils.js"></script>-->
+    <script src="js/2.7.2/jquery-3.3.1.min.js"></script>
+    <script src="js/2.7.2/Chart.bundle.js"></script>
+    <script src="js/2.7.2/utils.js"></script>
+    <style>
+        canvas{
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+
+</head>
+
+<body>
+<div style="width:75%;">
+    <canvas id="canvas"></canvas>
+</div>
+
+<span id="output"></span>
+<br>
+<br>
+<button id="randomizeData">Randomize Data</button>
+<button id="addDataset">Add Dataset</button>
+<button id="removeDataset">Remove Dataset</button>
+<button id="addData">Add Data</button>
+<button id="removeData">Remove Data</button>
+<script>
+
+    // начать повторы с интервалом 2 сек
+    var timerId = setInterval(drawStat, 2000);
+
+    var old_items = [];
+    var param = "host=10.106.2.126"; // + '&user_id=' + user_id;
+    //
+    // function drawStat() {
+    //
+    //     // Получаем данные через AJAX-запрос и формируем массив для отрисовки графика
+    //     $.ajax({
+    //         url: '/getEntity',
+    //         type: 'GET',
+    //         data: param, //'{"host":"' + param + '"}',
+    //         dataType: 'json',
+    //         contentType: "application/json",
+    //         mimeType: 'application/json',
+    //         // async: false,
+    //         success: function (data) {
+    //
+    //             // var json = data; //JSON.parse(data);
+    //
+    //             // var items = [];
+    //             //
+    //             // $.each(data, function(key, val){
+    //             //     items.push('<li id="' + key + '">' + val + '</li>');
+    //             // });
+    //             //
+    //             // $('<ul/>', {
+    //             //     'class': 'my-new-list',
+    //             //     html: items.join('')
+    //             // }).appendTo('body');
+    //
+    //             //// if (old_items.length != data.length){
+    //             var items = [];
+    //             for (var i = 0; i < data.length; i++){
+    //                 items.push('<li id="' + i + '">'
+    //                     + data[i].id + ' '
+    //                     + data[i].datetime + ' '
+    //                     + data[i].ip + ' '
+    //                     + data[i].hostname + ' '
+    //                     + data[i].status + ' '
+    //                     + data[i].type + ' '
+    //                     + data[i].rest + ' '
+    //
+    //                     + '</li>');
+    //
+    //                 // items[i] = '<li id="' + json[i].id + '">';
+    //                 // items[i] += json[i].ip + ' ';
+    //                 // items[i] += '</li>';
+    //
+    //             }
+    //             var res = '<ul/>' + items;
+    //
+    //             // document.getElementById("output").innerHTML = res;
+    //             /// old_items = items;
+    //
+    //             ////}
+    //
+    //
+    //
+    //
+    //         }
+    //     });
+    //
+    // }
+    //
+    //
+
+
+
+
+    function drawStat() {
+        var ctx = document.getElementById('canvas').getContext('2d');
+
+        var param = "host=10.106.2.126&start=2018-04-25 01:26:13&end=2018-04-27 18:05:47&interval=30m"; //
+        $.ajax({
+            url: '/getCountStatBad',
+            type: 'GET',
+            data: param, //'{"host":"' + param + '"}',
+            dataType: 'json',
+            contentType: "application/json",
+            mimeType: 'application/json',
+            // async: false,
+            success: function (dataRes) {
+                var items = [];
+                var items2 = [];
+                var labls = [];
+                var maxCount = 0;
+                for (var i = 0; i < dataRes.length; i++){
+                    var count = parseInt(dataRes[i].count);
+                    if (count > maxCount){
+                        maxCount = count;
+                    }
+
+                    items.push(count);
+                    items2.push(parseInt(dataRes[i].count)+5);
+                    labls.push(''+dataRes[i].middleDate)
+                }
+
+                config = {
+                    type: 'line',
+                    data: {
+                        labels:  labls,
+                        // ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                        datasets: [{
+                            label: 'Bad request',
+                            backgroundColor: window.chartColors.red,
+                            borderColor: window.chartColors.red,
+                            data:  items,
+                            //     [
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor()
+                            // ],
+                            fill: false,
+                        }, {
+                            label: 'Good request',
+                            fill: false,
+                            backgroundColor: window.chartColors.blue,
+                            borderColor: window.chartColors.blue,
+                            data:  items2,
+                            //     [
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor(),
+                            //     randomScalingFactor()
+                            // ],
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        title: {
+                            display: true,
+                            text: 'Stats TBAPI'
+                        },
+                        tooltips: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        hover: {
+                            mode: 'nearest',
+                            intersect: true
+                        },
+                        scales: {
+                            xAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Time'
+                                }
+                            }],
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Value'
+                                },
+                                ticks: {
+                                    min: 0, //parseInt(dataRes[0].middleTime),
+                                    max: maxCount + 10, //100, //parseInt(dataRes[dataRes.length-1].middleTime),
+
+                                    // forces step size to be 5 units
+                                    stepSize: 10 //(parseInt(dataRes[1].middleTime) - parseInt(dataRes[0].middleTime))
+
+                                    // min: 0,
+                                    // max: 100,
+                                    //
+                                    // // forces step size to be 5 units
+                                    // stepSize: 5
+                                }
+                            }]
+                        }
+                    }
+                };
+
+
+
+
+            }
+        });
+
+
+
+
+
+
+        window.myLine = new Chart(ctx, config);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    var config;
+
+
+
+
+    window.onload = function() {
+        drawStat();
+
+    };
+
+    document.getElementById('randomizeData').addEventListener('click', function() {
+        config.data.datasets.forEach(function(dataset) {
+            dataset.data = dataset.data.map(function() {
+                return randomScalingFactor();
+            });
+        });
+
+        window.myLine.update();
+    });
+
+    var colorNames = Object.keys(window.chartColors);
+    document.getElementById('addDataset').addEventListener('click', function() {
+        var colorName = colorNames[config.data.datasets.length % colorNames.length];
+        var newColor = window.chartColors[colorName];
+        var newDataset = {
+            label: 'Dataset ' + config.data.datasets.length,
+            backgroundColor: newColor,
+            borderColor: newColor,
+            data: [],
+            fill: false
+        };
+
+        for (var index = 0; index < config.data.labels.length; ++index) {
+            newDataset.data.push(randomScalingFactor());
+        }
+
+        config.data.datasets.push(newDataset);
+        window.myLine.update();
+    });
+
+    document.getElementById('addData').addEventListener('click', function() {
+        if (config.data.datasets.length > 0) {
+            var month = MONTHS[config.data.labels.length % MONTHS.length];
+            config.data.labels.push(month);
+
+            config.data.datasets.forEach(function(dataset) {
+                dataset.data.push(randomScalingFactor());
+            });
+
+            window.myLine.update();
+        }
+    });
+
+    document.getElementById('removeDataset').addEventListener('click', function() {
+        config.data.datasets.splice(0, 1);
+        window.myLine.update();
+    });
+
+    document.getElementById('removeData').addEventListener('click', function() {
+        config.data.labels.splice(-1, 1); // remove the label first
+
+        config.data.datasets.forEach(function(dataset) {
+            dataset.data.pop();
+        });
+
+        window.myLine.update();
+    });
+
+</script>
+</body>
+
+</html>
