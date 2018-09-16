@@ -1,0 +1,2 @@
+# statlog
+statlog start
